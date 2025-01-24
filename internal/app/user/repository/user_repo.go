@@ -20,13 +20,13 @@ func InitDatabase(dsn string) {
 		var err error
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
-			log.Fatalf("连接数据库失败: %v", err)
+			log.Printf("连接数据库失败: %v\n", err)
 		}
 		log.Println("数据库连接成功")
 	})
 	err := db.AutoMigrate(&model.User{})
 	if err != nil {
-		log.Fatalf("数据库自动迁移失败: %v", err)
+		log.Printf("数据库自动迁移失败: %v\n", err)
 	}
 }
 
@@ -46,6 +46,9 @@ func GetUserByEmail(email string) (*model.User, error) {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			log.Printf("email 为: %s 的用户不存在\n", email)
 			return nil, errors.New("用户不存在")
+		} else {
+			log.Printf(result.Error.Error())
+			return nil, result.Error
 		}
 	}
 	return &user, nil

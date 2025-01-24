@@ -1,4 +1,4 @@
-// Package user 提供用户服务
+// 提供用户服务
 // Author: chenxi 2025.01
 package service
 
@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bwmarrin/snowflake"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log"
 	"math/rand"
 	"regexp"
@@ -28,17 +30,18 @@ func (UserService) Register(ctx context.Context, req *userpb.RegisterReq) (*user
 	// 1.输入校验
 	err := validateInput(email, pass, confirmPass)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	// 2.检测用户是否已存在
 	_, err = repository.GetUserByEmail(email)
 	if err == nil {
-		return nil, errors.New("用户已存在, 无需再进行注册")
+		return nil, status.Error(codes.AlreadyExists, "用户已存在，无需再进行注册")
 	}
 	// 3.用户注册
 	node, err := snowflake.NewNode(1)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// 生成雪花 ID
 	snowID := node.Generate()
@@ -49,9 +52,9 @@ func (UserService) Register(ctx context.Context, req *userpb.RegisterReq) (*user
 		Nickname: genNickname(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
-
+	log.Printf("用户注册成功, 用户 id 为: %d", snowID.Int64())
 	return &userpb.RegisterResp{
 		UserId: snowID.Int64(),
 	}, nil
@@ -62,10 +65,11 @@ func (UserService) Login(ctx context.Context, req *userpb.LoginReq) (*userpb.Log
 	email, pass := req.GetEmail(), req.GetPassword()
 	user, err := repository.GetUserByEmail(email)
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if hashPassword(pass) != user.PassHash {
-		return nil, errors.New("密码错误")
+		return nil, status.Error(codes.InvalidArgument, errors.New("密码错误").Error())
 	}
 
 	return &userpb.LoginResp{
