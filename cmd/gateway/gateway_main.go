@@ -5,12 +5,14 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"tiktok-mini-mall/internal/app/gateway/handler"
-	"tiktok-mini-mall/pkg"
+	"tiktok-mini-mall/pkg/middleware"
+	"tiktok-mini-mall/pkg/utils"
 )
 
 func main() {
-	pkg.InitViper("configs/config.yaml")
+	utils.InitViper("configs/config.yaml")
 	r := gin.Default()
+	r.Use(middleware.TraceIDMiddleware())
 	userGroup := r.Group("/user")
 	{
 		userGroup.POST("/register", handler.RegisterHandler)

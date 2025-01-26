@@ -8,11 +8,11 @@ import (
 	userpb "tiktok-mini-mall/api/pb/user_pb"
 	"tiktok-mini-mall/internal/app/user/repository"
 	"tiktok-mini-mall/internal/app/user/service"
-	"tiktok-mini-mall/pkg"
+	"tiktok-mini-mall/pkg/utils"
 )
 
 func main() {
-	pkg.InitViper("configs/config.yaml")
+	utils.InitViper("configs/config.yaml")
 	dsn := viper.GetString("user.database.dsn")
 	repository.InitDatabase(dsn)
 

@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"log"
@@ -33,8 +32,7 @@ func InitDatabase(dsn string) {
 func CreateUser(user *model.User) error {
 	result := db.Create(user)
 	if result.Error != nil {
-		log.Println("用户创建失败")
-		return errors.New("用户创建失败")
+		return result.Error
 	}
 	return nil
 }
@@ -43,13 +41,7 @@ func GetUserByEmail(email string) (*model.User, error) {
 	var user model.User
 	result := db.First(&user, "email = ?", email)
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			log.Printf("email 为: %s 的用户不存在\n", email)
-			return nil, errors.New("用户不存在")
-		} else {
-			log.Printf(result.Error.Error())
-			return nil, result.Error
-		}
+		return nil, result.Error
 	}
 	return &user, nil
 }

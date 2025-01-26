@@ -6,15 +6,18 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/bwmarrin/snowflake"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 	"log"
 	"math/rand"
 	"regexp"
 	"tiktok-mini-mall/api/pb/user_pb"
+	"tiktok-mini-mall/internal/app/user/errortype"
 	"tiktok-mini-mall/internal/app/user/model"
 	"tiktok-mini-mall/internal/app/user/repository"
 	"time"
@@ -27,6 +30,8 @@ type UserService struct {
 // Register 注册功能
 func (UserService) Register(ctx context.Context, req *userpb.RegisterReq) (*userpb.RegisterResp, error) {
 	email, pass, confirmPass := req.GetEmail(), req.GetPassword(), req.GetConfirmPassword()
+	md, _ := metadata.FromIncomingContext(ctx)
+	traceID := md["trace-id"]
 	// 1.输入校验
 	err := validateInput(email, pass, confirmPass)
 	if err != nil {
@@ -40,7 +45,8 @@ func (UserService) Register(ctx context.Context, req *userpb.RegisterReq) (*user
 	// 3.用户注册
 	node, err := snowflake.NewNode(1)
 	if err != nil {
-		log.Println(err)
+		err = errors.Wrap(err, "snowflake.NewNode 出错")
+		log.Printf("TraceID: %v, err: %+v", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// 生成雪花 ID
@@ -52,9 +58,10 @@ func (UserService) Register(ctx context.Context, req *userpb.RegisterReq) (*user
 		Nickname: genNickname(),
 	})
 	if err != nil {
+		err = errors.Wrap(err, "创建用户失败")
+		log.Printf("TraceID: %v, err: %+v", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	log.Printf("用户注册成功, 用户 id 为: %d", snowID.Int64())
 	return &userpb.RegisterResp{
 		UserId: snowID.Int64(),
 	}, nil
@@ -65,11 +72,13 @@ func (UserService) Login(ctx context.Context, req *userpb.LoginReq) (*userpb.Log
 	email, pass := req.GetEmail(), req.GetPassword()
 	user, err := repository.GetUserByEmail(email)
 	if err != nil {
-		log.Println(err)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.InvalidArgument, errortype.ErrUserNotFound.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if hashPassword(pass) != user.PassHash {
-		return nil, status.Error(codes.InvalidArgument, errors.New("密码错误").Error())
+		return nil, status.Error(codes.InvalidArgument, errortype.ErrInvalidPassword.Error())
 	}
 
 	return &userpb.LoginResp{
@@ -80,15 +89,15 @@ func (UserService) Login(ctx context.Context, req *userpb.LoginReq) (*userpb.Log
 // 输入校验
 func validateInput(email, pass, confirmPass string) error {
 	if email == "" || pass == "" || confirmPass == "" {
-		return errors.New("用户输入不能有空")
+		return errortype.ErrInputEmpty
 	}
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailRegex)
 	if !re.MatchString(email) {
-		return errors.New("用户输入邮箱格式有误")
+		return errortype.ErrEmailFormat
 	}
 	if pass != confirmPass {
-		return errors.New("用户两次输入的密码不一致")
+		return errortype.PasswordMismatch
 	}
 
 	return nil
