@@ -18,6 +18,12 @@ func main() {
 		userGroup.POST("/register", handler.RegisterHandler)
 		userGroup.POST("/login", handler.LoginHandler)
 	}
+	productGroup := r.Group("/product")
+	{
+		productGroup.GET("/list-products", handler.ListProductsHandler)
+		productGroup.GET("/:id", handler.GetProductHandler)
+		productGroup.GET("/search", handler.SearchProductsHandler)
+	}
 
 	err := r.Run(":8080")
 	if err != nil {
