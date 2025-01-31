@@ -1,7 +1,7 @@
 package model
 
 type Product struct {
-	ID          uint32  `gorm:"primaryKey"`
+	Id          uint32  `gorm:"primaryKey"`
 	Name        string  `gorm:"type:varchar(255);not null"`
 	Description string  `gorm:"type:text"`
 	Picture     string  `gorm:"type:varchar(255)"`

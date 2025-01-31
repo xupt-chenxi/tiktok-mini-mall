@@ -34,7 +34,7 @@ func (ProductService) ListProducts(ctx context.Context, req *prod.ListProductsRe
 		var categories []string
 		_ = json.Unmarshal([]byte(product.Categories), &categories)
 		products = append(products, &prod.Product{
-			Id:          product.ID,
+			Id:          product.Id,
 			Name:        product.Name,
 			Description: product.Description,
 			Picture:     product.Picture,
@@ -63,7 +63,7 @@ func (ProductService) GetProduct(ctx context.Context, req *prod.GetProductReq) (
 	_ = json.Unmarshal([]byte(product.Categories), &categories)
 	return &prod.GetProductResp{
 		Product: &prod.Product{
-			Id:          product.ID,
+			Id:          product.Id,
 			Name:        product.Name,
 			Description: product.Description,
 			Picture:     product.Picture,
@@ -89,7 +89,7 @@ func (ProductService) SearchProducts(ctx context.Context, req *prod.SearchProduc
 		var categories []string
 		_ = json.Unmarshal([]byte(product.Categories), &categories)
 		products = append(products, &prod.Product{
-			Id:          product.ID,
+			Id:          product.Id,
 			Name:        product.Name,
 			Description: product.Description,
 			Picture:     product.Picture,

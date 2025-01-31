@@ -52,7 +52,7 @@ func (UserService) Register(ctx context.Context, req *userpb.RegisterReq) (*user
 	// 生成雪花 ID
 	snowID := node.Generate()
 	err = repository.CreateUser(&model.User{
-		UserID:   snowID.Int64(),
+		Id:       snowID.Int64(),
 		Email:    email,
 		PassHash: hashPassword(req.GetPassword()),
 		Nickname: genNickname(),
@@ -82,7 +82,7 @@ func (UserService) Login(ctx context.Context, req *userpb.LoginReq) (*userpb.Log
 	}
 
 	return &userpb.LoginResp{
-		UserId: user.UserID,
+		UserId: user.Id,
 	}, nil
 }
 

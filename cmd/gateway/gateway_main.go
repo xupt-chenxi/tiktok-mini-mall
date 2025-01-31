@@ -24,6 +24,12 @@ func main() {
 		productGroup.GET("/:id", handler.GetProductHandler)
 		productGroup.GET("/search", handler.SearchProductsHandler)
 	}
+	cartGroup := r.Group("/cart")
+	{
+		cartGroup.POST("/add-item", handler.AddItemHandler)
+		cartGroup.POST("/get-cart", handler.GetCartHandler)
+		cartGroup.POST("/empty-cart", handler.EmptyCartHandler)
+	}
 
 	err := r.Run(":8080")
 	if err != nil {

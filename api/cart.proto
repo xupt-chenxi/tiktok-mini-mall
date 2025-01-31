@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api;
 
-option go_package = "./pb;pb";
+option go_package = "./pb/cart_pb;cart";
 
 service CartService {
   rpc AddItem(AddItemReq) returns (AddItemResp) {}
@@ -16,18 +16,18 @@ message CartItem {
 }
 
 message AddItemReq {
-  uint32 user_id = 1;
+  int64 user_id = 1;
   CartItem item = 2;
 }
 
 message AddItemResp {}
 
 message EmptyCartReq {
-  uint32 user_id = 1;
+  int64 user_id = 1;
 }
 
 message GetCartReq {
-  uint32 user_id = 1;
+  int64 user_id = 1;
 }
 
 message GetCartResp {
@@ -35,7 +35,7 @@ message GetCartResp {
 }
 
 message Cart {
-  uint32 user_id = 1;
+  int64 user_id = 1;
   repeated CartItem items = 2;
 }
 

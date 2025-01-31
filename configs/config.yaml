@@ -12,3 +12,9 @@ product:
   port: ":50052"
   database:
     dsn: "root:123456@tcp(127.0.0.1:3306)/tiktok_mini_mall?charset=utf8mb4&parseTime=True&loc=Local"
+
+cart:
+  ip: "localhost"
+  port: ":50053"
+  database:
+    dsn: "root:123456@tcp(127.0.0.1:3306)/tiktok_mini_mall?charset=utf8mb4&parseTime=True&loc=Local"
