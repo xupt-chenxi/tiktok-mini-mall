@@ -3,15 +3,26 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"tiktok-mini-mall/internal/app/gateway/handler"
 	"tiktok-mini-mall/pkg/middleware"
 	"tiktok-mini-mall/pkg/utils"
+	"time"
 )
 
 func main() {
 	utils.InitViper("configs/config.yaml")
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+	r.Use(middleware.AuthMiddleware())
 	r.Use(middleware.TraceIDMiddleware())
 	userGroup := r.Group("/user")
 	{

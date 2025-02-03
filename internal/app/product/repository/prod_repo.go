@@ -33,8 +33,13 @@ func InitDatabase(dsn string) {
 func GetProductList(page int, pageSize int, categoryName string) ([]*model.Product, error) {
 	var productList []*model.Product
 	offset := (page - 1) * pageSize
-	err := db.Where("JSON_CONTAINS(categories, ?)", fmt.Sprintf(`["%s"]`, categoryName)).Offset(offset).Limit(pageSize).Find(&productList).Error
-	return productList, err
+	var result *gorm.DB
+	if categoryName != "" {
+		result = db.Where("JSON_CONTAINS(categories, ?)", fmt.Sprintf(`["%s"]`, categoryName)).Offset(offset).Limit(pageSize).Find(&productList)
+	} else {
+		result = db.Offset(offset).Limit(pageSize).Find(&productList)
+	}
+	return productList, result.Error
 }
 
 func GetProductById(id int) (*model.Product, error) {

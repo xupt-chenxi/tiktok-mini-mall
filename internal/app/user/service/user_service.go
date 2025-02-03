@@ -6,9 +6,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"github.com/bwmarrin/snowflake"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -16,10 +17,13 @@ import (
 	"log"
 	"math/rand"
 	"regexp"
+	"strconv"
+	"strings"
 	"tiktok-mini-mall/api/pb/user_pb"
 	"tiktok-mini-mall/internal/app/user/errortype"
 	"tiktok-mini-mall/internal/app/user/model"
 	"tiktok-mini-mall/internal/app/user/repository"
+	"tiktok-mini-mall/pkg/utils"
 	"time"
 )
 
@@ -80,9 +84,18 @@ func (UserService) Login(ctx context.Context, req *userpb.LoginReq) (*userpb.Log
 	if hashPassword(pass) != user.PassHash {
 		return nil, status.Error(codes.InvalidArgument, errortype.ErrInvalidPassword.Error())
 	}
-
+	token := strings.ReplaceAll(uuid.New().String(), "-", "")
+	ip := viper.GetString("redis.ip")
+	port := viper.GetString("redis.port")
+	password := viper.GetString("redis.password")
+	dbStr := viper.GetString("redis.db")
+	db, _ := strconv.Atoi(dbStr)
+	redisClient := utils.NewRedisClient(ip+port, password, db)
+	_ = redisClient.Set(context.Background(), "token:"+token, strconv.FormatInt(user.Id, 10), 12*time.Hour)
 	return &userpb.LoginResp{
-		UserId: user.Id,
+		UserId:   user.Id,
+		Token:    token,
+		Nickname: user.Nickname,
 	}, nil
 }
 
@@ -114,7 +127,16 @@ func hashPassword(password string) string {
 func genNickname() string {
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
-	timestamp := time.Now().UnixNano()
-	randomSuffix := r.Intn(1000)
-	return fmt.Sprintf("User_%d_%d", timestamp, randomSuffix)
+
+	// 字符集，包含大小写字母和数字
+	characters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+	nickname := ""
+
+	// 生成 4 位字符
+	for i := 0; i < 4; i++ {
+		randomIndex := r.Intn(len(characters))      // 获取随机字符的索引
+		nickname += string(characters[randomIndex]) // 累加字符
+	}
+
+	return "user_" + nickname
 }

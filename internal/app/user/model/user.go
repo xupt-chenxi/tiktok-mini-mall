@@ -9,6 +9,4 @@ type User struct {
 	Nickname  string `gorm:"size:100"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	//Orders []Order `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"` // 关联订单
-	//Cart   []Cart  `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"` // 关联购物车
 }

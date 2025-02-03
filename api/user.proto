@@ -26,4 +26,6 @@ message LoginReq {
 
 message LoginResp {
   int64 user_id = 1;
+  string token = 2;
+  string nickname = 3;
 }
