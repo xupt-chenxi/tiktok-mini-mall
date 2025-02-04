@@ -29,7 +29,6 @@ func InitDatabase(dsn string) {
 	if err != nil {
 		log.Printf("cart数据库自动迁移失败: %v\n", err)
 	}
-	db.Debug()
 }
 
 func AddItem(item *cart.CartItem, userId int) error {
