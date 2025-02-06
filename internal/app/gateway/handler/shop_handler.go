@@ -11,12 +11,11 @@ import (
 	"google.golang.org/grpc/status"
 	"log"
 	"net/http"
-	"strconv"
-	shop "tiktok-mini-mall/api/pb/shop_pb"
+	"tiktok-mini-mall/api/pb/shop"
 )
 
 type PlaceOrderReq struct {
-	UserId     int64   `json:"userId"`
+	UserId     string  `json:"userId"`
 	Name       string  `json:"name"`
 	Email      string  `json:"email"`
 	Address    string  `json:"address"`
@@ -25,7 +24,7 @@ type PlaceOrderReq struct {
 }
 
 type MarkOrderPaidReq struct {
-	UserId  int64  `json:"userId"`
+	UserId  string `json:"userId"`
 	OrderId string `json:"orderId"`
 }
 
@@ -44,7 +43,9 @@ func PlaceOrderHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与shop服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := shop.NewShopServiceClient(conn)
 
 	var orderItems []*shop.OrderItem
@@ -72,7 +73,7 @@ func PlaceOrderHandler(c *gin.Context) {
 
 func ListOrderHandler(c *gin.Context) {
 	traceID := c.GetString("TraceID")
-	userIdStr := c.PostForm("userId")
+	userId := c.PostForm("userId")
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
@@ -84,11 +85,12 @@ func ListOrderHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与shop服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := shop.NewShopServiceClient(conn)
-	userId, _ := strconv.Atoi(userIdStr)
 	res, err := client.ListOrder(ctx, &shop.ListOrderReq{
-		UserId: int64(userId),
+		UserId: userId,
 	})
 
 	if err != nil {
@@ -117,7 +119,9 @@ func MarkOrderPaid(c *gin.Context) {
 		log.Printf("TraceID: %v, 与shop服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := shop.NewShopServiceClient(conn)
 	res, err := client.MarkOrderPaid(ctx, &shop.MarkOrderPaidReq{
 		UserId:  req.UserId,

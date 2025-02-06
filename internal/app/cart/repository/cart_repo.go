@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm/clause"
 	"log"
 	"sync"
-	cart "tiktok-mini-mall/api/pb/cart_pb"
+	"tiktok-mini-mall/api/pb/cart"
 	"tiktok-mini-mall/internal/app/cart/model"
 )
 
@@ -31,9 +31,9 @@ func InitDatabase(dsn string) {
 	}
 }
 
-func AddItem(item *cart.CartItem, userId int) error {
+func AddItem(item *cart.CartItem, userId int64) error {
 	cartItem := &model.Cart{
-		UserId:    int64(userId),
+		UserId:    userId,
 		ProductId: item.ProductId,
 		Quantity:  item.Quantity,
 	}
@@ -45,17 +45,17 @@ func AddItem(item *cart.CartItem, userId int) error {
 	}).Create(cartItem).Error
 }
 
-func GetCart(userId int) ([]*model.Cart, error) {
+func GetCart(userId int64) ([]*model.Cart, error) {
 	var cartItems []*model.Cart
-	result := db.Where("user_id = ?", int64(userId)).Find(&cartItems)
+	result := db.Where("user_id = ?", userId).Find(&cartItems)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return cartItems, nil
 }
 
-func EmptyCart(userId int) error {
-	result := db.Where("user_id = ?", int64(userId)).Delete(&model.Cart{})
+func EmptyCart(userId int64) error {
+	result := db.Where("user_id = ?", userId).Delete(&model.Cart{})
 	if result.Error != nil {
 		return result.Error
 	}

@@ -10,12 +10,11 @@ import (
 	"google.golang.org/grpc/status"
 	"log"
 	"net/http"
-	"strconv"
-	"tiktok-mini-mall/api/pb/cart_pb"
+	"tiktok-mini-mall/api/pb/cart"
 )
 
 type AddItemReq struct {
-	UserId    int64  `json:"userId"`
+	UserId    string `json:"userId"`
 	ProductId uint32 `json:"productId"`
 	Quantity  int32  `json:"quantity"`
 }
@@ -38,7 +37,9 @@ func AddItemHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与cart服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := cart.NewCartServiceClient(conn)
 	res, err := client.AddItem(ctx, &cart.AddItemReq{
 		UserId: req.UserId,
@@ -62,7 +63,7 @@ func AddItemHandler(c *gin.Context) {
 
 func GetCartHandler(c *gin.Context) {
 	traceID := c.GetString("TraceID")
-	userIdStr := c.PostForm("userId")
+	userId := c.PostForm("userId")
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
@@ -74,11 +75,12 @@ func GetCartHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与cart服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := cart.NewCartServiceClient(conn)
-	userId, _ := strconv.Atoi(userIdStr)
 	res, err := client.GetCart(ctx, &cart.GetCartReq{
-		UserId: int64(userId),
+		UserId: userId,
 	})
 	if err != nil {
 		sts := status.Convert(err)
@@ -95,7 +97,7 @@ func GetCartHandler(c *gin.Context) {
 
 func EmptyCartHandler(c *gin.Context) {
 	traceID := c.GetString("TraceID")
-	userIdParm := c.PostForm("userId")
+	userId := c.PostForm("userId")
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
@@ -107,11 +109,12 @@ func EmptyCartHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与cart服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := cart.NewCartServiceClient(conn)
-	userId, err := strconv.Atoi(userIdParm)
 	res, err := client.EmptyCart(ctx, &cart.EmptyCartReq{
-		UserId: int64(userId),
+		UserId: userId,
 	})
 	if err != nil {
 		sts := status.Convert(err)

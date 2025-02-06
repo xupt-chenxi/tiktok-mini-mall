@@ -1,4 +1,4 @@
-// 提供商品服务
+// Package service 提供商品服务
 // Author: chenxi 2025.01
 package service
 
@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
-	prod "tiktok-mini-mall/api/pb/prod_pb"
+	"tiktok-mini-mall/api/pb/prod"
 	"tiktok-mini-mall/internal/app/product/repository"
 )
 

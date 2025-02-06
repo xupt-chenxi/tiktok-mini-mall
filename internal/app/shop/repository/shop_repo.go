@@ -42,6 +42,6 @@ func GetListOrder(userId int64) ([]*model.Order, error) {
 	return orders, nil
 }
 
-func MarkOrderPaid(userId int64, orderId string) error {
+func MarkOrderPaid(userId int64, orderId int64) error {
 	return db.Model(&model.Order{}).Where("id = ? AND user_id = ?", orderId, userId).Update("state", 1).Error
 }

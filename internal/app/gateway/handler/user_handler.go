@@ -11,12 +11,12 @@ import (
 	"google.golang.org/grpc/status"
 	"log"
 	"net/http"
-	userpb "tiktok-mini-mall/api/pb/user_pb"
+	"tiktok-mini-mall/api/pb/user"
 )
 
 func RegisterHandler(c *gin.Context) {
 	traceID := c.GetString("TraceID")
-	var req userpb.RegisterReq
+	var req user.RegisterReq
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(),
 			"code": http.StatusBadRequest})
@@ -33,8 +33,10 @@ func RegisterHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与用户服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
-	client := userpb.NewUserServiceClient(conn)
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
+	client := user.NewUserServiceClient(conn)
 	res, err := client.Register(ctx, &req)
 
 	if err != nil {
@@ -56,7 +58,7 @@ func RegisterHandler(c *gin.Context) {
 
 func LoginHandler(c *gin.Context) {
 	traceID := c.GetString("TraceID")
-	var req userpb.LoginReq
+	var req user.LoginReq
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(),
 			"code": http.StatusBadRequest})
@@ -73,8 +75,10 @@ func LoginHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与用户服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
-	client := userpb.NewUserServiceClient(conn)
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
+	client := user.NewUserServiceClient(conn)
 	res, err := client.Login(ctx, &req)
 
 	if err != nil {
@@ -88,6 +92,7 @@ func LoginHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 调用用户服务登录功能返回错误: %v\n", traceID, sts.Message())
 		return
 	}
+	log.Printf("userInfo: %v", res)
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
 		"data": res,

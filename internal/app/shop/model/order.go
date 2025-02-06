@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Order struct {
-	Id         string  `gorm:"type:varchar(100);primaryKey;autoIncrement:false"`
+	Id         int64   `gorm:"primaryKey;autoIncrement:false"`
 	UserId     int64   `gorm:"not null"`
 	Name       string  `gorm:"type:varchar(100);not null"`
 	Email      string  `gorm:"type:varchar(255);not null"`

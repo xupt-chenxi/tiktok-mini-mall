@@ -11,7 +11,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	prod "tiktok-mini-mall/api/pb/prod_pb"
+	"tiktok-mini-mall/api/pb/prod"
 )
 
 func ListProductsHandler(c *gin.Context) {
@@ -30,7 +30,9 @@ func ListProductsHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与商品服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := prod.NewProductCatalogServiceClient(conn)
 	res, err := client.ListProducts(ctx, &prod.ListProductsReq{
 		Page:         int32(page),
@@ -64,7 +66,9 @@ func GetProductHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与商品服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := prod.NewProductCatalogServiceClient(conn)
 	res, err := client.GetProduct(ctx, &prod.GetProductReq{
 		Id: uint32(id),
@@ -96,7 +100,9 @@ func SearchProductsHandler(c *gin.Context) {
 		log.Printf("TraceID: %v, 与商品服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
 	client := prod.NewProductCatalogServiceClient(conn)
 	res, err := client.SearchProducts(ctx, &prod.SearchProductsReq{
 		Query: query,

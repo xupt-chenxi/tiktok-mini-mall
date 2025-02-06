@@ -1,4 +1,4 @@
-// 提供用户服务
+// Package service 提供用户服务
 // Author: chenxi 2025.01
 package service
 
@@ -19,7 +19,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"tiktok-mini-mall/api/pb/user_pb"
+	"tiktok-mini-mall/api/pb/user"
 	"tiktok-mini-mall/internal/app/user/errortype"
 	"tiktok-mini-mall/internal/app/user/model"
 	"tiktok-mini-mall/internal/app/user/repository"
@@ -28,11 +28,11 @@ import (
 )
 
 type UserService struct {
-	userpb.UnimplementedUserServiceServer
+	user.UnimplementedUserServiceServer
 }
 
 // Register 注册功能
-func (UserService) Register(ctx context.Context, req *userpb.RegisterReq) (*userpb.RegisterResp, error) {
+func (UserService) Register(ctx context.Context, req *user.RegisterReq) (*user.RegisterResp, error) {
 	email, pass, confirmPass := req.GetEmail(), req.GetPassword(), req.GetConfirmPassword()
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
@@ -66,22 +66,27 @@ func (UserService) Register(ctx context.Context, req *userpb.RegisterReq) (*user
 		log.Printf("TraceID: %v, err: %+v", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return &userpb.RegisterResp{
-		UserId: snowID.Int64(),
+	return &user.RegisterResp{
+		UserId: snowID.String(),
 	}, nil
 }
 
 // Login 登录功能
-func (UserService) Login(ctx context.Context, req *userpb.LoginReq) (*userpb.LoginResp, error) {
+func (UserService) Login(ctx context.Context, req *user.LoginReq) (*user.LoginResp, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	traceID := md["trace-id"]
+
 	email, pass := req.GetEmail(), req.GetPassword()
-	user, err := repository.GetUserByEmail(email)
+	userInfo, err := repository.GetUserByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Error(codes.InvalidArgument, errortype.ErrUserNotFound.Error())
 		}
+		err = errors.Wrap(err, "查询用户出错")
+		log.Printf("TraceID: %v, err: %+v", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if hashPassword(pass) != user.PassHash {
+	if hashPassword(pass) != userInfo.PassHash {
 		return nil, status.Error(codes.InvalidArgument, errortype.ErrInvalidPassword.Error())
 	}
 	token := strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -91,11 +96,11 @@ func (UserService) Login(ctx context.Context, req *userpb.LoginReq) (*userpb.Log
 	dbStr := viper.GetString("redis.db")
 	db, _ := strconv.Atoi(dbStr)
 	redisClient := utils.NewRedisClient(ip+port, password, db)
-	_ = redisClient.Set(context.Background(), "token:"+token, strconv.FormatInt(user.Id, 10), 12*time.Hour)
-	return &userpb.LoginResp{
-		UserId:   user.Id,
+	_ = redisClient.Set(context.Background(), "token:"+token, strconv.FormatInt(userInfo.Id, 10), 12*time.Hour)
+	return &user.LoginResp{
+		UserId:   strconv.FormatInt(userInfo.Id, 10),
 		Token:    token,
-		Nickname: user.Nickname,
+		Nickname: userInfo.Nickname,
 	}, nil
 }
 

@@ -1,4 +1,4 @@
-// shop 服务
+// Package service shop 服务
 // Author: chenxi 2025.02
 package service
 
@@ -11,7 +11,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
-	shop "tiktok-mini-mall/api/pb/shop_pb"
+	"strconv"
+	"tiktok-mini-mall/api/pb/shop"
 	"tiktok-mini-mall/internal/app/shop/model"
 	"tiktok-mini-mall/internal/app/shop/repository"
 )
@@ -34,9 +35,10 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 	snowID := node.Generate()
 
 	orderItems, _ := json.Marshal(req.OrderItems)
+	userId, _ := strconv.ParseInt(req.GetUserId(), 10, 64)
 	err = repository.AddOrder(&model.Order{
-		Id:         snowID.String(),
-		UserId:     req.GetUserId(),
+		Id:         snowID.Int64(),
+		UserId:     userId,
 		Name:       req.GetName(),
 		Email:      req.GetEmail(),
 		Address:    req.GetAddress(),
@@ -59,7 +61,7 @@ func (ShopService) ListOrder(ctx context.Context, req *shop.ListOrderReq) (*shop
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
 
-	userId := req.GetUserId()
+	userId, _ := strconv.ParseInt(req.GetUserId(), 10, 64)
 	orderList, err := repository.GetListOrder(userId)
 	if err != nil {
 		err = errors.Wrap(err, "获取订单列表失败")
@@ -73,7 +75,8 @@ func (ShopService) ListOrder(ctx context.Context, req *shop.ListOrderReq) (*shop
 		_ = json.Unmarshal([]byte(order.OrderItems), &orderItems)
 		orders = append(orders, &shop.Order{
 			OrderItems: orderItems,
-			OrderId:    order.Id,
+			OrderId:    strconv.FormatInt(order.Id, 10),
+			State:      uint32(order.State),
 		})
 	}
 	return &shop.ListOrderResp{
@@ -85,8 +88,8 @@ func (ShopService) MarkOrderPaid(ctx context.Context, req *shop.MarkOrderPaidReq
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
 
-	userId := req.GetUserId()
-	orderId := req.GetOrderId()
+	orderId, _ := strconv.ParseInt(req.GetOrderId(), 10, 64)
+	userId, _ := strconv.ParseInt(req.GetUserId(), 10, 64)
 	err := repository.MarkOrderPaid(userId, orderId)
 	if err != nil {
 		err = errors.Wrap(err, "订单支付失败")

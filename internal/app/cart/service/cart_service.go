@@ -7,7 +7,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
-	cart "tiktok-mini-mall/api/pb/cart_pb"
+	"strconv"
+	"tiktok-mini-mall/api/pb/cart"
 	"tiktok-mini-mall/internal/app/cart/repository"
 )
 
@@ -16,11 +17,11 @@ type CartService struct {
 }
 
 func (CartService) AddItem(ctx context.Context, req *cart.AddItemReq) (*cart.AddItemResp, error) {
-	userId, item := req.GetUserId(), req.GetItem()
+	userIdStr, item := req.GetUserId(), req.GetItem()
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
-
-	err := repository.AddItem(item, int(userId))
+	userId, _ := strconv.ParseInt(userIdStr, 10, 64)
+	err := repository.AddItem(item, userId)
 	if err != nil {
 		err = errors.Wrap(err, "添加购物车失败")
 		log.Printf("TraceID: %v, err: %+v", traceID, err)
@@ -34,8 +35,9 @@ func (CartService) GetCart(ctx context.Context, req *cart.GetCartReq) (*cart.Get
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
 
-	userId := req.GetUserId()
-	cartItems, err := repository.GetCart(int(userId))
+	userIdStr := req.GetUserId()
+	userId, _ := strconv.ParseInt(userIdStr, 10, 64)
+	cartItems, err := repository.GetCart(userId)
 	if err != nil {
 		err = errors.Wrap(err, "查询购物车失败")
 		log.Printf("TraceID: %v, err: %+v", traceID, err)
@@ -51,7 +53,7 @@ func (CartService) GetCart(ctx context.Context, req *cart.GetCartReq) (*cart.Get
 	}
 	return &cart.GetCartResp{
 		Cart: &cart.Cart{
-			UserId: userId,
+			UserId: userIdStr,
 			Items:  items,
 		},
 	}, nil
@@ -61,8 +63,9 @@ func (CartService) EmptyCart(ctx context.Context, req *cart.EmptyCartReq) (*cart
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
 
-	userId := req.GetUserId()
-	err := repository.EmptyCart(int(userId))
+	userIdStr := req.GetUserId()
+	userId, _ := strconv.ParseInt(userIdStr, 10, 64)
+	err := repository.EmptyCart(userId)
 	if err != nil {
 		err = errors.Wrap(err, "清空购物车失败")
 		log.Printf("TraceID: %v, err: %+v", traceID, err)

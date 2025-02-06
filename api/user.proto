@@ -2,7 +2,7 @@ syntax="proto3";
 
 package api;
 
-option go_package = "./pb/user_pb;userpb";
+option go_package = "./pb/user;user";
 
 service UserService {
   rpc Register(RegisterReq) returns (RegisterResp) {}
@@ -16,7 +16,7 @@ message RegisterReq {
 }
 
 message RegisterResp {
-  int64 user_id = 1;
+  string user_id = 1;
 }
 
 message LoginReq {
@@ -25,7 +25,7 @@ message LoginReq {
 }
 
 message LoginResp {
-  int64 user_id = 1;
+  string user_id = 1;
   string token = 2;
   string nickname = 3;
 }

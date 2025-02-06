@@ -5,7 +5,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
-	shop "tiktok-mini-mall/api/pb/shop_pb"
+	"tiktok-mini-mall/api/pb/shop"
 	"tiktok-mini-mall/internal/app/shop/repository"
 	"tiktok-mini-mall/internal/app/shop/service"
 	"tiktok-mini-mall/pkg/utils"

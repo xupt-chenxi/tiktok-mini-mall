@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api;
 
-option go_package = "./pb/shop_pb;shop";
+option go_package = "./pb/shop;shop";
 
 service ShopService {
   rpc PlaceOrder(PlaceOrderReq) returns (PlaceOrderResp) {}
@@ -11,7 +11,7 @@ service ShopService {
 }
 
 message PlaceOrderReq {
-  int64 user_id = 1;
+  string user_id = 1;
   string name = 2;
   string email = 3;
   string address = 4;
@@ -30,12 +30,13 @@ message PlaceOrderResp {
 }
 
 message ListOrderReq {
-  int64 user_id = 1;
+  string user_id = 1;
 }
 
 message Order {
   repeated OrderItem order_items = 1;
   string order_id = 2;
+  uint32 state = 3;
 }
 
 message ListOrderResp {
@@ -43,7 +44,7 @@ message ListOrderResp {
 }
 
 message MarkOrderPaidReq {
-  int64 user_id = 1;
+  string user_id = 1;
   string order_id = 2;
 }
 
