@@ -41,6 +41,12 @@ func main() {
 		cartGroup.POST("/get-cart", handler.GetCartHandler)
 		cartGroup.POST("/empty-cart", handler.EmptyCartHandler)
 	}
+	shopGroup := r.Group("/shop")
+	{
+		shopGroup.POST("/place-order", handler.PlaceOrderHandler)
+		shopGroup.POST("/list-order", handler.ListOrderHandler)
+		shopGroup.POST("/paid-order", handler.MarkOrderPaid)
+	}
 
 	err := r.Run(":8080")
 	if err != nil {

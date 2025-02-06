@@ -19,6 +19,12 @@ cart:
   database:
     dsn: "root:123456@tcp(127.0.0.1:3306)/tiktok_mini_mall?charset=utf8mb4&parseTime=True&loc=Local"
 
+shop:
+  ip: "localhost"
+  port: ":50054"
+  database:
+    dsn: "root:123456@tcp(127.0.0.1:3306)/tiktok_mini_mall?charset=utf8mb4&parseTime=True&loc=Local"
+
 redis:
   ip: "localhost"
   port: ":6379"
