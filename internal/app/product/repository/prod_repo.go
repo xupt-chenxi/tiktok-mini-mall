@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"log"
 	"sync"
 	"tiktok-mini-mall/internal/app/product/model"
@@ -53,4 +54,28 @@ func SearchProducts(query string) ([]*model.Product, error) {
 	// TODO 先基于模糊匹配进行搜索, 后续引入 Elasticsearch
 	result := db.Where("name LIKE ? OR description LIKE ?", "%"+query+"%", "%"+query+"%").Find(&products)
 	return products, result.Error
+}
+
+func DecreaseStock(id uint32, quantity uint32) error {
+	var product model.Product
+
+	tx := db.Begin()
+	// 获取库存并对该行加锁, 防止超卖
+	if err := tx.Model(&product).Where("id = ?", id).Clauses(clause.Locking{Strength: "UPDATE"}).First(&product).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	// 检查库存是否足够
+	if product.Stock-quantity < 0 {
+		tx.Rollback()
+		return fmt.Errorf("库存不足")
+	}
+	// 扣减库存
+	if err := tx.Model(&product).Where("id = ?", id).Update("stock", gorm.Expr("stock - ?", quantity)).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+
+	return nil
 }

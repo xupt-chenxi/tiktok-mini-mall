@@ -101,3 +101,17 @@ func (ProductService) SearchProducts(ctx context.Context, req *prod.SearchProduc
 		Results: products,
 	}, nil
 }
+
+func (ProductService) DecreaseStock(ctx context.Context, req *prod.DecreaseStockReq) (*prod.DecreaseStockResp, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	traceID := md["trace-id"]
+
+	err := repository.DecreaseStock(req.GetId(), req.GetQuantity())
+	if err != nil {
+		err = errors.Wrap(err, "扣减商品库存出错")
+		log.Printf("TraceID: %v, err: %+v\n", traceID, err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return nil, nil
+}

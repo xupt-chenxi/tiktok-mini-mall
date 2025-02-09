@@ -7,11 +7,15 @@ import (
 	"encoding/json"
 	"github.com/bwmarrin/snowflake"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
 	"strconv"
+	"tiktok-mini-mall/api/pb/prod"
 	"tiktok-mini-mall/api/pb/shop"
 	"tiktok-mini-mall/internal/app/shop/model"
 	"tiktok-mini-mall/internal/app/shop/repository"
@@ -25,6 +29,27 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
 
+	// 获取商品服务
+	ip, port := viper.GetString("product.ip"), viper.GetString("product.port")
+	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	defer func(conn *grpc.ClientConn) {
+		_ = conn.Close()
+	}(conn)
+	client := prod.NewProductCatalogServiceClient(conn)
+	orderItems := req.GetOrderItems()
+	for _, orderItem := range orderItems {
+		// 调用商品服务扣减库存
+		_, err := client.DecreaseStock(ctx, &prod.DecreaseStockReq{
+			Id:       orderItem.ProductId,
+			Quantity: orderItem.Quantity,
+		})
+		if err != nil {
+			sts := status.Convert(err)
+			log.Printf("TraceID: %v, 调用shop服务DecreaseStock返回错误: %v\n", traceID, sts.Message())
+			return nil, err
+		}
+	}
+
 	node, err := snowflake.NewNode(1)
 	if err != nil {
 		err = errors.Wrap(err, "snowflake.NewNode 出错")
@@ -34,7 +59,7 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 	// 生成雪花 ID
 	snowID := node.Generate()
 
-	orderItems, _ := json.Marshal(req.OrderItems)
+	orderItemsStr, _ := json.Marshal(req.OrderItems)
 	userId, _ := strconv.ParseInt(req.GetUserId(), 10, 64)
 	err = repository.AddOrder(&model.Order{
 		Id:         snowID.Int64(),
@@ -43,7 +68,7 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 		Email:      req.GetEmail(),
 		Address:    req.GetAddress(),
 		Price:      req.GetAmount(),
-		OrderItems: string(orderItems),
+		OrderItems: string(orderItemsStr),
 		State:      0,
 	})
 	if err != nil {
