@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -12,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"tiktok-mini-mall/api/pb/user"
+	"tiktok-mini-mall/pkg/utils"
 )
 
 func RegisterHandler(c *gin.Context) {
@@ -25,7 +25,7 @@ func RegisterHandler(c *gin.Context) {
 	// 通过 gRPC 调用用户服务
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := viper.GetString("user.ip"), viper.GetString("user.port")
+	ip, port := utils.Config.User.IP, utils.Config.User.Port
 	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
@@ -67,7 +67,7 @@ func LoginHandler(c *gin.Context) {
 	// 通过 gRPC 调用用户服务
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := viper.GetString("user.ip"), viper.GetString("user.port")
+	ip, port := utils.Config.User.IP, utils.Config.User.Port
 	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),

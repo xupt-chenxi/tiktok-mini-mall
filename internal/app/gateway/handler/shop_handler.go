@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -12,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"tiktok-mini-mall/api/pb/shop"
+	"tiktok-mini-mall/pkg/utils"
 )
 
 type PlaceOrderReq struct {
@@ -35,7 +35,7 @@ func PlaceOrderHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := viper.GetString("shop.ip"), viper.GetString("shop.port")
+	ip, port := utils.Config.Shop.IP, utils.Config.Shop.Port
 	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
@@ -77,7 +77,7 @@ func ListOrderHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := viper.GetString("shop.ip"), viper.GetString("shop.port")
+	ip, port := utils.Config.Shop.IP, utils.Config.Shop.Port
 	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
@@ -111,7 +111,7 @@ func MarkOrderPaid(c *gin.Context) {
 	_ = c.ShouldBindJSON(&req)
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := viper.GetString("shop.ip"), viper.GetString("shop.port")
+	ip, port := utils.Config.Shop.IP, utils.Config.Shop.Port
 	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),

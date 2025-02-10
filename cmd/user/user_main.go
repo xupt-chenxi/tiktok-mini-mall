@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -12,11 +11,10 @@ import (
 )
 
 func main() {
-	utils.InitViper("configs/config.yaml")
-	dsn := viper.GetString("user.database.dsn")
+	dsn := utils.Config.User.Database.DSN
 	repository.InitDatabase(dsn)
 
-	port := viper.GetString("user.port")
+	port := utils.Config.User.Port
 	// 注册用户服务
 	lis, err := net.Listen("tcp", port)
 	if err != nil {

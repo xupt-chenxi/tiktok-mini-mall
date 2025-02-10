@@ -19,9 +19,10 @@ func InitDatabase(dsn string) {
 		var err error
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
-			log.Printf("连接数据库失败: %v\n", err)
+			log.Printf("user连接数据库失败: %v\n", err)
+		} else {
+			log.Println("user数据库连接成功")
 		}
-		log.Println("数据库连接成功")
 	})
 	err := db.AutoMigrate(&model.User{})
 	if err != nil {

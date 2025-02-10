@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -12,11 +11,10 @@ import (
 )
 
 func main() {
-	utils.InitViper("configs/config.yaml")
-	dsn := viper.GetString("cart.database.dsn")
+	dsn := utils.Config.Cart.Database.DSN
 	repository.InitDatabase(dsn)
 
-	port := viper.GetString("cart.port")
+	port := utils.Config.Cart.Port
 	// 注册购物车品服务
 	lis, err := net.Listen("tcp", port)
 	if err != nil {

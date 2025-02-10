@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -12,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"tiktok-mini-mall/api/pb/prod"
+	"tiktok-mini-mall/pkg/utils"
 )
 
 func ListProductsHandler(c *gin.Context) {
@@ -22,7 +22,7 @@ func ListProductsHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := viper.GetString("product.ip"), viper.GetString("product.port")
+	ip, port := utils.Config.Product.IP, utils.Config.Product.Port
 	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
@@ -58,7 +58,7 @@ func GetProductHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := viper.GetString("product.ip"), viper.GetString("product.port")
+	ip, port := utils.Config.Product.IP, utils.Config.Product.Port
 	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
@@ -92,7 +92,7 @@ func SearchProductsHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := viper.GetString("product.ip"), viper.GetString("product.port")
+	ip, port := utils.Config.Product.IP, utils.Config.Product.Port
 	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),

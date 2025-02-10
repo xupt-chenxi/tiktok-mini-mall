@@ -21,9 +21,11 @@ func InitDatabase(dsn string) {
 		var err error
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
-			log.Printf("连接数据库失败: %v\n", err)
+			log.Printf("连接Product数据库失败: %v\n", err)
+		} else {
+			log.Println("Product数据库连接成功")
 		}
-		log.Println("数据库连接成功")
+
 	})
 	err := db.AutoMigrate(&model.Product{})
 	if err != nil {

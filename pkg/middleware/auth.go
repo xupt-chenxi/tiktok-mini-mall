@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"net/http"
 	"strconv"
 	"tiktok-mini-mall/pkg/utils"
@@ -40,11 +39,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			})
 			return
 		}
-		utils.InitViper("configs/config.yaml")
-		ip := viper.GetString("redis.ip")
-		port := viper.GetString("redis.port")
-		password := viper.GetString("redis.password")
-		dbStr := viper.GetString("redis.db")
+		ip, port, password, dbStr := utils.Config.Redis.IP, utils.Config.Redis.Port, utils.Config.Redis.Password, utils.Config.Redis.DB
 		db, _ := strconv.Atoi(dbStr)
 		redisClient := utils.NewRedisClient(ip+port, password, db)
 		userId, _ := redisClient.Get(context.Background(), "token:"+token)

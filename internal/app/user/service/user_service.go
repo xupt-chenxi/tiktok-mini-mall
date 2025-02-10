@@ -9,7 +9,6 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -90,10 +89,7 @@ func (UserService) Login(ctx context.Context, req *user.LoginReq) (*user.LoginRe
 		return nil, status.Error(codes.InvalidArgument, errortype.ErrInvalidPassword.Error())
 	}
 	token := strings.ReplaceAll(uuid.New().String(), "-", "")
-	ip := viper.GetString("redis.ip")
-	port := viper.GetString("redis.port")
-	password := viper.GetString("redis.password")
-	dbStr := viper.GetString("redis.db")
+	ip, port, password, dbStr := utils.Config.Redis.IP, utils.Config.Redis.Port, utils.Config.Redis.Password, utils.Config.Redis.DB
 	db, _ := strconv.Atoi(dbStr)
 	redisClient := utils.NewRedisClient(ip+port, password, db)
 	_ = redisClient.Set(context.Background(), "token:"+token, strconv.FormatInt(userInfo.Id, 10), 12*time.Hour)

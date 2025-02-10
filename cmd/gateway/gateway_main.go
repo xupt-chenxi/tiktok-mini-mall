@@ -7,12 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"tiktok-mini-mall/internal/app/gateway/handler"
 	"tiktok-mini-mall/pkg/middleware"
-	"tiktok-mini-mall/pkg/utils"
 	"time"
 )
 
 func main() {
-	utils.InitViper("configs/config.yaml")
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
