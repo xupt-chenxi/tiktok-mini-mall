@@ -3,14 +3,12 @@ package handler
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
 	"net/http"
 	"tiktok-mini-mall/api/pb/cart"
-	"tiktok-mini-mall/pkg/utils"
+	"tiktok-mini-mall/internal/app/pkg/grpcclient"
 )
 
 type AddItemReq struct {
@@ -29,18 +27,13 @@ func AddItemHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := utils.Config.Cart.IP, utils.Config.Cart.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpcclient.GetCartClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
 			"code": http.StatusInternalServerError})
 		log.Printf("TraceID: %v, 与cart服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := cart.NewCartServiceClient(conn)
 	res, err := client.AddItem(ctx, &cart.AddItemReq{
 		UserId: req.UserId,
 		Item: &cart.CartItem{
@@ -67,18 +60,13 @@ func GetCartHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := utils.Config.Cart.IP, utils.Config.Cart.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpcclient.GetCartClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
 			"code": http.StatusInternalServerError})
 		log.Printf("TraceID: %v, 与cart服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := cart.NewCartServiceClient(conn)
 	res, err := client.GetCart(ctx, &cart.GetCartReq{
 		UserId: userId,
 	})
@@ -101,18 +89,13 @@ func EmptyCartHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := utils.Config.Cart.IP, utils.Config.Cart.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpcclient.GetCartClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
 			"code": http.StatusInternalServerError})
 		log.Printf("TraceID: %v, 与cart服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := cart.NewCartServiceClient(conn)
 	res, err := client.EmptyCart(ctx, &cart.EmptyCartReq{
 		UserId: userId,
 	})

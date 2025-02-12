@@ -7,18 +7,16 @@ import (
 	"encoding/json"
 	"github.com/bwmarrin/snowflake"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
 	"strconv"
 	"tiktok-mini-mall/api/pb/prod"
 	"tiktok-mini-mall/api/pb/shop"
+	"tiktok-mini-mall/internal/app/pkg/grpcclient"
 	"tiktok-mini-mall/internal/app/shop/model"
 	"tiktok-mini-mall/internal/app/shop/repository"
-	"tiktok-mini-mall/pkg/utils"
 )
 
 type ShopService struct {
@@ -30,12 +28,11 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 	traceID := md["trace-id"]
 
 	// 获取商品服务
-	ip, port := utils.Config.Product.IP, utils.Config.Product.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := prod.NewProductCatalogServiceClient(conn)
+	client, err := grpcclient.GetProdClient()
+	if err != nil {
+		log.Printf("TraceID: %v, 与商品服务建立连接失败: %v\n", traceID, err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 	orderItems := req.GetOrderItems()
 	for _, orderItem := range orderItems {
 		// 调用商品服务扣减库存

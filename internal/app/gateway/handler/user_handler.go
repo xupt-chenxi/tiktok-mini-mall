@@ -3,15 +3,13 @@ package handler
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
 	"net/http"
 	"tiktok-mini-mall/api/pb/user"
-	"tiktok-mini-mall/pkg/utils"
+	"tiktok-mini-mall/internal/app/pkg/grpcclient"
 )
 
 func RegisterHandler(c *gin.Context) {
@@ -25,18 +23,13 @@ func RegisterHandler(c *gin.Context) {
 	// 通过 gRPC 调用用户服务
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := utils.Config.User.IP, utils.Config.User.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpcclient.GetUserClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
 			"code": http.StatusInternalServerError})
 		log.Printf("TraceID: %v, 与用户服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := user.NewUserServiceClient(conn)
 	res, err := client.Register(ctx, &req)
 
 	if err != nil {
@@ -67,18 +60,13 @@ func LoginHandler(c *gin.Context) {
 	// 通过 gRPC 调用用户服务
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := utils.Config.User.IP, utils.Config.User.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpcclient.GetUserClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
 			"code": http.StatusInternalServerError})
 		log.Printf("TraceID: %v, 与用户服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := user.NewUserServiceClient(conn)
 	res, err := client.Login(ctx, &req)
 
 	if err != nil {

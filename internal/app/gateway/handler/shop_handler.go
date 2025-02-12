@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
 	"net/http"
 	"tiktok-mini-mall/api/pb/shop"
-	"tiktok-mini-mall/pkg/utils"
+	"tiktok-mini-mall/internal/app/pkg/grpcclient"
 )
 
 type PlaceOrderReq struct {
@@ -35,18 +33,13 @@ func PlaceOrderHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := utils.Config.Shop.IP, utils.Config.Shop.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpcclient.GetShopClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
 			"code": http.StatusInternalServerError})
 		log.Printf("TraceID: %v, 与shop服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := shop.NewShopServiceClient(conn)
 
 	var orderItems []*shop.OrderItem
 	_ = json.Unmarshal([]byte(req.OrderItems), &orderItems)
@@ -77,18 +70,13 @@ func ListOrderHandler(c *gin.Context) {
 
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := utils.Config.Shop.IP, utils.Config.Shop.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpcclient.GetShopClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
 			"code": http.StatusInternalServerError})
 		log.Printf("TraceID: %v, 与shop服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := shop.NewShopServiceClient(conn)
 	res, err := client.ListOrder(ctx, &shop.ListOrderReq{
 		UserId: userId,
 	})
@@ -111,18 +99,13 @@ func MarkOrderPaid(c *gin.Context) {
 	_ = c.ShouldBindJSON(&req)
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
-	ip, port := utils.Config.Shop.IP, utils.Config.Shop.Port
-	conn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpcclient.GetShopClient()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(),
 			"code": http.StatusInternalServerError})
 		log.Printf("TraceID: %v, 与shop服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	defer func(conn *grpc.ClientConn) {
-		_ = conn.Close()
-	}(conn)
-	client := shop.NewShopServiceClient(conn)
 	res, err := client.MarkOrderPaid(ctx, &shop.MarkOrderPaidReq{
 		UserId:  req.UserId,
 		OrderId: req.OrderId,
