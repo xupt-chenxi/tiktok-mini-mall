@@ -81,3 +81,15 @@ func DecreaseStock(id uint32, quantity uint32) error {
 
 	return nil
 }
+
+func GetStockList() ([]*struct {
+	Id    uint32
+	Stock uint32
+}, error) {
+	var stockList []*struct {
+		Id    uint32
+		Stock uint32
+	}
+	result := db.Table("products").Select("id, stock").Find(&stockList)
+	return stockList, result.Error
+}
