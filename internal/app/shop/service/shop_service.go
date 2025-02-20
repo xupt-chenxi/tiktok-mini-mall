@@ -33,19 +33,6 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 		log.Printf("TraceID: %v, 与商品服务建立连接失败: %v\n", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	orderItems := req.GetOrderItems()
-	for _, orderItem := range orderItems {
-		// 调用商品服务扣减库存
-		_, err := client.DecreaseStock(ctx, &prod.DecreaseStockReq{
-			Id:       orderItem.ProductId,
-			Quantity: orderItem.Quantity,
-		})
-		if err != nil {
-			sts := status.Convert(err)
-			log.Printf("TraceID: %v, 调用shop服务DecreaseStock返回错误: %v\n", traceID, sts.Message())
-			return nil, err
-		}
-	}
 
 	node, err := snowflake.NewNode(1)
 	if err != nil {
@@ -55,11 +42,32 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 	}
 	// 生成雪花 ID
 	snowID := node.Generate()
+	orderId := snowID.Int64()
 
 	orderItemsStr, _ := json.Marshal(req.OrderItems)
+	orderItems := req.GetOrderItems()
+	var prodOrderItems []*prod.DecreaseStockItem
+	for _, orderItem := range orderItems {
+		prodOrderItems = append(prodOrderItems, &prod.DecreaseStockItem{
+			ProductId: orderItem.ProductId,
+			Quantity:  orderItem.Quantity,
+		})
+	}
+	// 调用商品服务扣减库存
+	_, err = client.DecreaseStock(ctx, &prod.DecreaseStockReq{
+		OrderItems: prodOrderItems,
+		OrderId:    strconv.Itoa(int(orderId)),
+		UserId:     req.UserId,
+	})
+	if err != nil {
+		sts := status.Convert(err)
+		log.Printf("TraceID: %v, 调用shop服务DecreaseStock返回错误: %v\n", traceID, sts.Message())
+		return nil, err
+	}
+
 	userId, _ := strconv.ParseInt(req.GetUserId(), 10, 64)
 	err = repository.AddOrder(&model.Order{
-		Id:         snowID.Int64(),
+		Id:         orderId,
 		UserId:     userId,
 		Name:       req.GetName(),
 		Email:      req.GetEmail(),
@@ -68,6 +76,7 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 		OrderItems: string(orderItemsStr),
 		State:      0,
 	})
+
 	if err != nil {
 		err = errors.Wrap(err, "生成订单失败")
 		log.Printf("TraceID: %v, err: %+v", traceID, err)
@@ -106,13 +115,13 @@ func (ShopService) ListOrder(ctx context.Context, req *shop.ListOrderReq) (*shop
 	}, nil
 }
 
-func (ShopService) MarkOrderPaid(ctx context.Context, req *shop.MarkOrderPaidReq) (*shop.MarkOrderPaidResp, error) {
+func (ShopService) UpdateOrderState(ctx context.Context, req *shop.UpdateOrderStateReq) (*shop.UpdateOrderStateResp, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
 
 	orderId, _ := strconv.ParseInt(req.GetOrderId(), 10, 64)
 	userId, _ := strconv.ParseInt(req.GetUserId(), 10, 64)
-	err := repository.MarkOrderPaid(userId, orderId)
+	err := repository.UpdateOrderState(userId, orderId, uint8(req.State))
 	if err != nil {
 		err = errors.Wrap(err, "订单支付失败")
 		log.Printf("TraceID: %v, err: %+v", traceID, err)

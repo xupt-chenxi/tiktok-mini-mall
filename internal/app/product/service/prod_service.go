@@ -5,6 +5,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"github.com/apache/rocketmq-clients/golang"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -110,21 +111,42 @@ func (ProductService) DecreaseStock(ctx context.Context, req *prod.DecreaseStock
 
 	ip, port, password, dbStr := utils.Config.Redis.IP, utils.Config.Redis.Port, utils.Config.Redis.Password, utils.Config.Redis.DB
 	db, _ := strconv.Atoi(dbStr)
+	orderItems := req.OrderItems
 	redisClient := utils.NewRedisClient(ip+port, password, db)
-	prodIdStr := strconv.Itoa(int(req.GetId()))
-	err := redisClient.DecreaseStock(context.Background(), "stock:"+prodIdStr, req.GetQuantity())
+	for _, orderItem := range orderItems {
+		productId := orderItem.ProductId
+		prodIdStr := strconv.Itoa(int(productId))
+		err := redisClient.DecreaseStock(context.Background(), "stock:"+prodIdStr, orderItem.Quantity)
+		if err != nil {
+			// TODO 报错时打印的TraceID为空, 排查问题
+			err = errors.Wrap(err, "扣减商品库存出错")
+			log.Printf("TraceID: %v, err: %+v\n", traceID, err)
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+	// 基于RocketMQ异步扣减库存
+	topic := utils.Config.RocketMQ.TopicProd
+	producer, err := utils.NewProducer(topic)
 	if err != nil {
-		err = errors.Wrap(err, "扣减商品库存出错")
+		err = errors.Wrap(err, "RocketMQ新建生产者实例出错")
 		log.Printf("TraceID: %v, err: %+v\n", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	// TODO 基于 RocketMQ 异步扣减库存
-	err = repository.DecreaseStock(req.GetId(), req.GetQuantity())
+	orderId := req.GetOrderId()
+	data, _ := json.Marshal(req)
+	msg := &golang.Message{
+		Topic: topic,
+		Body:  data,
+	}
+	msg.SetKeys(orderId)
+	msg.SetTag("tag_stock")
+	msg.SetMessageGroup("stock")
+	_, err = producer.Send(context.TODO(), msg)
 	if err != nil {
-		err = errors.Wrap(err, "扣减商品库存出错")
+		err = errors.Wrap(err, "向RocketMQ中发送库存扣减信息出错")
 		log.Printf("TraceID: %v, err: %+v\n", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
+	log.Printf("向RocketMQ中发送库存扣减信息成功")
 	return nil, nil
 }

@@ -7,7 +7,7 @@ option go_package = "./pb/shop;shop";
 service ShopService {
   rpc PlaceOrder(PlaceOrderReq) returns (PlaceOrderResp) {}
   rpc ListOrder(ListOrderReq) returns (ListOrderResp) {}
-  rpc MarkOrderPaid(MarkOrderPaidReq) returns (MarkOrderPaidResp) {}
+  rpc UpdateOrderState(UpdateOrderStateReq) returns (UpdateOrderStateResp) {}
 }
 
 message PlaceOrderReq {
@@ -43,9 +43,10 @@ message ListOrderResp {
   repeated Order orders = 1;
 }
 
-message MarkOrderPaidReq {
+message UpdateOrderStateReq {
   string user_id = 1;
   string order_id = 2;
+  uint32 state = 3;
 }
 
-message MarkOrderPaidResp {}
+message UpdateOrderStateResp {}

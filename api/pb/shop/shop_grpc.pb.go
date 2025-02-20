@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ShopService_PlaceOrder_FullMethodName    = "/api.ShopService/PlaceOrder"
-	ShopService_ListOrder_FullMethodName     = "/api.ShopService/ListOrder"
-	ShopService_MarkOrderPaid_FullMethodName = "/api.ShopService/MarkOrderPaid"
+	ShopService_PlaceOrder_FullMethodName       = "/api.ShopService/PlaceOrder"
+	ShopService_ListOrder_FullMethodName        = "/api.ShopService/ListOrder"
+	ShopService_UpdateOrderState_FullMethodName = "/api.ShopService/UpdateOrderState"
 )
 
 // ShopServiceClient is the client API for ShopService service.
@@ -30,7 +30,7 @@ const (
 type ShopServiceClient interface {
 	PlaceOrder(ctx context.Context, in *PlaceOrderReq, opts ...grpc.CallOption) (*PlaceOrderResp, error)
 	ListOrder(ctx context.Context, in *ListOrderReq, opts ...grpc.CallOption) (*ListOrderResp, error)
-	MarkOrderPaid(ctx context.Context, in *MarkOrderPaidReq, opts ...grpc.CallOption) (*MarkOrderPaidResp, error)
+	UpdateOrderState(ctx context.Context, in *UpdateOrderStateReq, opts ...grpc.CallOption) (*UpdateOrderStateResp, error)
 }
 
 type shopServiceClient struct {
@@ -61,10 +61,10 @@ func (c *shopServiceClient) ListOrder(ctx context.Context, in *ListOrderReq, opt
 	return out, nil
 }
 
-func (c *shopServiceClient) MarkOrderPaid(ctx context.Context, in *MarkOrderPaidReq, opts ...grpc.CallOption) (*MarkOrderPaidResp, error) {
+func (c *shopServiceClient) UpdateOrderState(ctx context.Context, in *UpdateOrderStateReq, opts ...grpc.CallOption) (*UpdateOrderStateResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MarkOrderPaidResp)
-	err := c.cc.Invoke(ctx, ShopService_MarkOrderPaid_FullMethodName, in, out, cOpts...)
+	out := new(UpdateOrderStateResp)
+	err := c.cc.Invoke(ctx, ShopService_UpdateOrderState_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (c *shopServiceClient) MarkOrderPaid(ctx context.Context, in *MarkOrderPaid
 type ShopServiceServer interface {
 	PlaceOrder(context.Context, *PlaceOrderReq) (*PlaceOrderResp, error)
 	ListOrder(context.Context, *ListOrderReq) (*ListOrderResp, error)
-	MarkOrderPaid(context.Context, *MarkOrderPaidReq) (*MarkOrderPaidResp, error)
+	UpdateOrderState(context.Context, *UpdateOrderStateReq) (*UpdateOrderStateResp, error)
 	mustEmbedUnimplementedShopServiceServer()
 }
 
@@ -94,8 +94,8 @@ func (UnimplementedShopServiceServer) PlaceOrder(context.Context, *PlaceOrderReq
 func (UnimplementedShopServiceServer) ListOrder(context.Context, *ListOrderReq) (*ListOrderResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListOrder not implemented")
 }
-func (UnimplementedShopServiceServer) MarkOrderPaid(context.Context, *MarkOrderPaidReq) (*MarkOrderPaidResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MarkOrderPaid not implemented")
+func (UnimplementedShopServiceServer) UpdateOrderState(context.Context, *UpdateOrderStateReq) (*UpdateOrderStateResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrderState not implemented")
 }
 func (UnimplementedShopServiceServer) mustEmbedUnimplementedShopServiceServer() {}
 func (UnimplementedShopServiceServer) testEmbeddedByValue()                     {}
@@ -154,20 +154,20 @@ func _ShopService_ListOrder_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ShopService_MarkOrderPaid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MarkOrderPaidReq)
+func _ShopService_UpdateOrderState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOrderStateReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ShopServiceServer).MarkOrderPaid(ctx, in)
+		return srv.(ShopServiceServer).UpdateOrderState(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ShopService_MarkOrderPaid_FullMethodName,
+		FullMethod: ShopService_UpdateOrderState_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShopServiceServer).MarkOrderPaid(ctx, req.(*MarkOrderPaidReq))
+		return srv.(ShopServiceServer).UpdateOrderState(ctx, req.(*UpdateOrderStateReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -188,8 +188,8 @@ var ShopService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ShopService_ListOrder_Handler,
 		},
 		{
-			MethodName: "MarkOrderPaid",
-			Handler:    _ShopService_MarkOrderPaid_Handler,
+			MethodName: "UpdateOrderState",
+			Handler:    _ShopService_UpdateOrderState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

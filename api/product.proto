@@ -49,8 +49,14 @@ message SearchProductsResp {
 }
 
 message DecreaseStockReq {
-  uint32 id = 1;
-  uint32 quantity = 2;
+  string order_id = 1;
+  string user_id = 2;
+  repeated DecreaseStockItem order_items = 3;
+}
+
+message DecreaseStockItem {
+  uint32 product_id = 1;
+  uint32  quantity = 2;
 }
 
 message DecreaseStockResp {

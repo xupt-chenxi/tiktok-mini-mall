@@ -43,7 +43,7 @@ func main() {
 	{
 		shopGroup.POST("/place-order", handler.PlaceOrderHandler)
 		shopGroup.POST("/list-order", handler.ListOrderHandler)
-		shopGroup.POST("/paid-order", handler.MarkOrderPaid)
+		shopGroup.POST("/update-order", handler.UpdateOrderState)
 	}
 
 	err := r.Run(":8080")

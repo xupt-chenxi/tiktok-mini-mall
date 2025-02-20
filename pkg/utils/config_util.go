@@ -22,15 +22,23 @@ type RedisConfig struct {
 	Password string `mapstructure:"password"`
 }
 
+type RocketConfig struct {
+	Endpoint  string `mapstructure:"endpoint"`
+	AccessKey string `mapstructure:"access_key"`
+	SecretKey string `mapstructure:"secret_key"`
+	TopicProd string `mapstructure:"topic_prod"`
+}
+
 type AllConfig struct {
 	App struct {
 		Name string `mapstructure:"name"`
 	} `mapstructure:"app"`
-	User    ServiceConfig `mapstructure:"user"`
-	Product ServiceConfig `mapstructure:"product"`
-	Cart    ServiceConfig `mapstructure:"cart"`
-	Shop    ServiceConfig `mapstructure:"shop"`
-	Redis   RedisConfig   `mapstructure:"redis"`
+	User     ServiceConfig `mapstructure:"user"`
+	Product  ServiceConfig `mapstructure:"product"`
+	Cart     ServiceConfig `mapstructure:"cart"`
+	Shop     ServiceConfig `mapstructure:"shop"`
+	Redis    RedisConfig   `mapstructure:"redis"`
+	RocketMQ RocketConfig  `mapstructure:"rocketmq"`
 }
 
 var Config AllConfig

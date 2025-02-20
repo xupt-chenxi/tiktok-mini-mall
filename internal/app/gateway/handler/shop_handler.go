@@ -21,9 +21,10 @@ type PlaceOrderReq struct {
 	OrderItems string  `json:"orderItems"`
 }
 
-type MarkOrderPaidReq struct {
+type UpdateOrderStateReq struct {
 	UserId  string `json:"userId"`
 	OrderId string `json:"orderId"`
+	State   uint32 `json:"state"`
 }
 
 func PlaceOrderHandler(c *gin.Context) {
@@ -93,9 +94,9 @@ func ListOrderHandler(c *gin.Context) {
 	})
 }
 
-func MarkOrderPaid(c *gin.Context) {
+func UpdateOrderState(c *gin.Context) {
 	traceID := c.GetString("TraceID")
-	var req MarkOrderPaidReq
+	var req UpdateOrderStateReq
 	_ = c.ShouldBindJSON(&req)
 	md := metadata.Pairs("trace-id", traceID)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
@@ -106,15 +107,16 @@ func MarkOrderPaid(c *gin.Context) {
 		log.Printf("TraceID: %v, 与shop服务建立连接失败: %v\n", traceID, err)
 		return
 	}
-	res, err := client.MarkOrderPaid(ctx, &shop.MarkOrderPaidReq{
+	res, err := client.UpdateOrderState(ctx, &shop.UpdateOrderStateReq{
 		UserId:  req.UserId,
 		OrderId: req.OrderId,
+		State:   req.State,
 	})
 
 	if err != nil {
 		sts := status.Convert(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": sts.Message()})
-		log.Printf("TraceID: %v, 调用shop服务MarkOrderPaid返回错误: %v\n", traceID, sts.Message())
+		log.Printf("TraceID: %v, 调用shop服务UpdateOrderState返回错误: %v\n", traceID, sts.Message())
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
