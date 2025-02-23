@@ -1,6 +1,10 @@
 app:
   name: "TikTok Mini Mall"
 
+gateway:
+  ip: "localhost"
+  port: ":8080"
+
 user:
   ip: "localhost"
   port: ":50051"
@@ -36,3 +40,11 @@ rocketmq:
   access_key: "xxxxxx"
   secret_key: "xxxxxx"
   topic_prod: "topic_prod"
+
+nacos:
+  ip: "localhost"
+  port: 8848
+  log_dir: "/tmp/nacos/log"
+  cache_dir: "/tmp/nacos/cache"
+  timeout_ms: 5000
+  namespace_id: ""

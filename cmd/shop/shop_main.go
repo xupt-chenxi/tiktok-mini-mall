@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -14,15 +15,31 @@ func main() {
 	dsn := utils.Config.Shop.Database.DSN
 	repository.InitDatabase(dsn)
 
+	namingClient, err := utils.NewNamingClient()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	success, err := namingClient.RegisterInstance(vo.RegisterInstanceParam{
+		Ip:          utils.Config.Shop.IP,
+		Port:        50054,
+		ServiceName: "shop_service",
+		Weight:      10,
+		Enable:      true,
+		Healthy:     true,
+		Ephemeral:   true,
+	})
+	if success == false {
+		log.Fatalf("shop服务注册失败")
+	}
+	log.Println("shop服务注册成功")
+
 	port := utils.Config.Shop.Port
-	// 注册购物车品服务
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("shop服务监听端口失败: %v", err)
 	}
 	grpcServer := grpc.NewServer()
 	shop.RegisterShopServiceServer(grpcServer, &service.ShopService{})
-	log.Println("shop服务启动...")
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("shop服务启动失败: %v", err)
 	}

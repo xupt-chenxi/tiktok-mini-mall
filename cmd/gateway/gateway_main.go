@@ -5,8 +5,11 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
+	"log"
 	"tiktok-mini-mall/internal/app/gateway/handler"
 	"tiktok-mini-mall/pkg/middleware"
+	"tiktok-mini-mall/pkg/utils"
 	"time"
 )
 
@@ -46,8 +49,25 @@ func main() {
 		shopGroup.POST("/update-order", handler.UpdateOrderState)
 	}
 
-	err := r.Run(":8080")
+	namingClient, err := utils.NewNamingClient()
 	if err != nil {
-		return
+		log.Fatalf(err.Error())
+	}
+	success, err := namingClient.RegisterInstance(vo.RegisterInstanceParam{
+		Ip:          utils.Config.Gateway.IP,
+		Port:        8080,
+		ServiceName: "gateway_service",
+		Weight:      10,
+		Enable:      true,
+		Healthy:     true,
+		Ephemeral:   true,
+	})
+	if success == false {
+		log.Fatalf("网关服务注册失败")
+	}
+	log.Println("网关服务注册成功")
+	err = r.Run(utils.Config.Gateway.Port)
+	if err != nil {
+		log.Fatalf("网关服务启动失败: %v", err)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/apache/rocketmq-clients/golang"
 	"github.com/apache/rocketmq-clients/golang/credentials"
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -22,8 +23,25 @@ func main() {
 	dsn := utils.Config.Product.Database.DSN
 	repository.InitDatabase(dsn)
 
+	namingClient, err := utils.NewNamingClient()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	success, err := namingClient.RegisterInstance(vo.RegisterInstanceParam{
+		Ip:          utils.Config.Product.IP,
+		Port:        50052,
+		ServiceName: "product_service",
+		Weight:      10,
+		Enable:      true,
+		Healthy:     true,
+		Ephemeral:   true,
+	})
+	if success == false {
+		log.Fatalf("商品服务注册失败")
+	}
+	log.Println("商品服务注册成功")
+
 	port := utils.Config.Product.Port
-	// 注册商品服务
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("商品服务监听端口失败: %v", err)
@@ -35,7 +53,6 @@ func main() {
 		log.Fatal("商品库存缓存预热失败: ", err)
 	}
 	go processStockDecrease()
-	log.Println("商品服务启动...")
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("商品服务启动失败: %v", err)
 	}
