@@ -43,18 +43,25 @@ type NacosConfig struct {
 	NamespaceID string `mapstructure:"namespace_id"`
 }
 
+type EsConfig struct {
+	Host     string `mapstructure:"host"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+}
+
 type AllConfig struct {
 	App struct {
 		Name string `mapstructure:"name"`
 	} `mapstructure:"app"`
-	Gateway  GatewayConfig `mapstructure:"gateway"`
-	User     ServiceConfig `mapstructure:"user"`
-	Product  ServiceConfig `mapstructure:"product"`
-	Cart     ServiceConfig `mapstructure:"cart"`
-	Shop     ServiceConfig `mapstructure:"shop"`
-	Redis    RedisConfig   `mapstructure:"redis"`
-	RocketMQ RocketConfig  `mapstructure:"rocketmq"`
-	Nacos    NacosConfig   `mapstructure:"nacos"`
+	Gateway       GatewayConfig `mapstructure:"gateway"`
+	User          ServiceConfig `mapstructure:"user"`
+	Product       ServiceConfig `mapstructure:"product"`
+	Cart          ServiceConfig `mapstructure:"cart"`
+	Shop          ServiceConfig `mapstructure:"shop"`
+	Redis         RedisConfig   `mapstructure:"redis"`
+	RocketMQ      RocketConfig  `mapstructure:"rocketmq"`
+	Nacos         NacosConfig   `mapstructure:"nacos"`
+	Elasticsearch EsConfig      `mapstructure:"elasticsearch"`
 }
 
 var Config AllConfig

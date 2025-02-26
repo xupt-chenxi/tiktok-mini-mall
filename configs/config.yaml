@@ -48,3 +48,8 @@ nacos:
   cache_dir: "/tmp/nacos/cache"
   timeout_ms: 5000
   namespace_id: ""
+
+elasticsearch:
+  host: "localhost"
+  username: "elastic"
+  password: ""

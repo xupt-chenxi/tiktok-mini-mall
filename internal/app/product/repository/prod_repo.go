@@ -51,6 +51,12 @@ func GetProductById(id int) (*model.Product, error) {
 	return product, result.Error
 }
 
+func GetAllProducts() ([]*model.Product, error) {
+	var productList []*model.Product
+	result := db.Find(&productList)
+	return productList, result.Error
+}
+
 func SearchProducts(query string) ([]*model.Product, error) {
 	var products []*model.Product
 	// TODO 先基于模糊匹配进行搜索, 后续引入 Elasticsearch

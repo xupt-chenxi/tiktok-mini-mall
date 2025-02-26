@@ -80,23 +80,22 @@ func (ProductService) SearchProducts(ctx context.Context, req *prod.SearchProduc
 	md, _ := metadata.FromIncomingContext(ctx)
 	traceID := md["trace-id"]
 
-	productList, err := repository.SearchProducts(req.GetQuery())
+	productList, err := utils.SearchProducts(req.GetQuery())
 	if err != nil {
 		err = errors.Wrap(err, "搜索商品出错")
 		log.Printf("TraceID: %v, err: %+v\n", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
 	var products []*prod.Product
 	for _, product := range productList {
 		var categories []string
-		_ = json.Unmarshal([]byte(product.Categories), &categories)
+		_ = json.Unmarshal([]byte((*product)["categories"].(string)), &categories)
 		products = append(products, &prod.Product{
-			Id:          product.Id,
-			Name:        product.Name,
-			Description: product.Description,
-			Picture:     product.Picture,
-			Price:       product.Price,
+			Id:          uint32((*product)["id"].(float64)),
+			Name:        (*product)["name"].(string),
+			Description: (*product)["description"].(string),
+			Picture:     (*product)["picture"].(string),
+			Price:       float32((*product)["price"].(float64)),
 			Categories:  categories,
 		})
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/apache/rocketmq-clients/golang"
 	"github.com/apache/rocketmq-clients/golang/credentials"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
@@ -53,6 +54,11 @@ func main() {
 		log.Fatal("商品库存缓存预热失败: ", err)
 	}
 	go processStockDecrease()
+	err = initES()
+	if err != nil {
+		log.Fatal("ES预热失败: ", err)
+	}
+	log.Println("ES预热成功")
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("商品服务启动失败: %v", err)
 	}
@@ -157,4 +163,57 @@ func processStockDecrease() {
 			}
 		}
 	}
+}
+
+func initES() error {
+	mappings := &map[string]interface{}{
+		"mappings": map[string]interface{}{
+			"properties": map[string]interface{}{
+				"id": map[string]interface{}{
+					"type": "integer",
+				},
+				"name": map[string]interface{}{
+					"type": "text",
+				},
+				"description": map[string]interface{}{
+					"type": "text",
+				},
+				"picture": map[string]interface{}{
+					"type": "text",
+				},
+				"price": map[string]interface{}{
+					"type": "float",
+				},
+				"categories": map[string]interface{}{
+					"type": "text",
+				},
+			},
+		},
+	}
+	err := utils.CreateIndex("products", mappings)
+	if err != nil {
+		return err
+	}
+
+	products, err := repository.GetAllProducts()
+	if err != nil {
+		return err
+	}
+	for _, product := range products {
+		doc := map[string]interface{}{
+			"id":          product.Id,
+			"name":        product.Name,
+			"description": product.Description,
+			"picture":     product.Picture,
+			"price":       product.Price,
+			"categories":  product.Categories,
+		}
+
+		docBytes, _ := json.Marshal(doc)
+		docID := strconv.Itoa(int(product.Id))
+		if err := utils.IndexDocument("products", docID, docBytes); err != nil {
+			return fmt.Errorf("索引失败 (商品ID %d): %v", product.Id, err)
+		}
+	}
+	return nil
 }
