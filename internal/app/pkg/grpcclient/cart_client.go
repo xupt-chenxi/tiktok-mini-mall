@@ -2,6 +2,7 @@ package grpcclient
 
 import (
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"sync"
@@ -9,18 +10,21 @@ import (
 	"tiktok-mini-mall/pkg/utils"
 )
 
-var cartClient cart.CartServiceClient
-
-// var cartConn *grpc.ClientConn
-var cartMu sync.Mutex
+var (
+	cartClient cart.CartServiceClient
+	cartConn   *grpc.ClientConn
+	cartMu     sync.Mutex
+)
 
 func GetCartClient() (cart.CartServiceClient, error) {
-	if cartClient == nil {
+	if cartClient == nil || !isCartConnHealthy() {
 		cartMu.Lock()
 		defer cartMu.Unlock()
+		_ = cartConn.Close()
 		if cartClient == nil {
 			ip, port := utils.Config.Cart.IP, utils.Config.Cart.Port
-			cartConn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			var err error
+			cartConn, err = grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return nil, err
 			}
@@ -32,12 +36,7 @@ func GetCartClient() (cart.CartServiceClient, error) {
 	return cartClient, nil
 }
 
-//func CloseCartConn() error {
-//	if cartConn != nil {
-//		err := cartConn.Close()
-//		if err != nil {
-//			return err
-//		}
-//	}
-//	return nil
-//}
+func isCartConnHealthy() bool {
+	state := cartConn.GetState()
+	return state == connectivity.Ready || state == connectivity.Idle
+}

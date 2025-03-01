@@ -2,6 +2,7 @@ package grpcclient
 
 import (
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"sync"
@@ -9,18 +10,23 @@ import (
 	"tiktok-mini-mall/pkg/utils"
 )
 
-var userClient user.UserServiceClient
-
-// var userConn *grpc.ClientConn
-var userMu sync.Mutex
+var (
+	userClient user.UserServiceClient
+	userConn   *grpc.ClientConn
+	userMu     sync.Mutex
+)
 
 func GetUserClient() (user.UserServiceClient, error) {
-	if userClient == nil {
+	if userClient == nil || !isUserConnHealthy() {
 		userMu.Lock()
 		defer userMu.Unlock()
+		if userConn != nil {
+			_ = userConn.Close()
+		}
 		if userClient == nil {
 			ip, port := utils.Config.User.IP, utils.Config.User.Port
-			userConn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			var err error
+			userConn, err = grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return nil, err
 			}
@@ -32,12 +38,7 @@ func GetUserClient() (user.UserServiceClient, error) {
 	return userClient, nil
 }
 
-//func CloseUserConn() error {
-//	if userConn != nil {
-//		err := userConn.Close()
-//		if err != nil {
-//			return err
-//		}
-//	}
-//	return nil
-//}
+func isUserConnHealthy() bool {
+	state := userConn.GetState()
+	return state == connectivity.Ready || state == connectivity.Idle
+}

@@ -2,6 +2,7 @@ package grpcclient
 
 import (
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"sync"
@@ -9,18 +10,23 @@ import (
 	"tiktok-mini-mall/pkg/utils"
 )
 
-var shopClient shop.ShopServiceClient
-
-// var shopConn *grpc.ClientConn
-var shopMu sync.Mutex
+var (
+	shopClient shop.ShopServiceClient
+	shopConn   *grpc.ClientConn
+	shopMu     sync.Mutex
+)
 
 func GetShopClient() (shop.ShopServiceClient, error) {
-	if shopClient == nil {
+	if shopClient == nil || !isShopConnHealthy() {
 		shopMu.Lock()
 		defer shopMu.Unlock()
+		if shopConn != nil {
+			_ = shopConn.Close()
+		}
 		if shopClient == nil {
 			ip, port := utils.Config.Shop.IP, utils.Config.Shop.Port
-			shopConn, err := grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			var err error
+			shopConn, err = grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return nil, err
 			}
@@ -32,12 +38,7 @@ func GetShopClient() (shop.ShopServiceClient, error) {
 	return shopClient, nil
 }
 
-//func CloseShopConn() error {
-//	if shopConn != nil {
-//		err := shopConn.Close()
-//		if err != nil {
-//			return err
-//		}
-//	}
-//	return nil
-//}
+func isShopConnHealthy() bool {
+	state := shopConn.GetState()
+	return state == connectivity.Ready || state == connectivity.Idle
+}
