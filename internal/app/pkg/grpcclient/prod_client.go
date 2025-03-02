@@ -20,7 +20,9 @@ func GetProdClient() (prod.ProductCatalogServiceClient, error) {
 	if prodClient == nil || !isProdConnHealthy() {
 		prodMu.Lock()
 		defer prodMu.Unlock()
-		_ = prodConn.Close()
+		if prodConn != nil {
+			_ = prodConn.Close()
+		}
 		if prodClient == nil {
 			ip, port := utils.Config.Product.IP, utils.Config.Product.Port
 			var err error

@@ -20,7 +20,9 @@ func GetCartClient() (cart.CartServiceClient, error) {
 	if cartClient == nil || !isCartConnHealthy() {
 		cartMu.Lock()
 		defer cartMu.Unlock()
-		_ = cartConn.Close()
+		if cartConn != nil {
+			_ = cartConn.Close()
+		}
 		if cartClient == nil {
 			ip, port := utils.Config.Cart.IP, utils.Config.Cart.Port
 			var err error

@@ -5,6 +5,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"github.com/apache/rocketmq-clients/golang"
 	"github.com/bwmarrin/snowflake"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -17,6 +18,8 @@ import (
 	"tiktok-mini-mall/internal/app/pkg/grpcclient"
 	"tiktok-mini-mall/internal/app/shop/model"
 	"tiktok-mini-mall/internal/app/shop/repository"
+	"tiktok-mini-mall/pkg/utils"
+	"time"
 )
 
 type ShopService struct {
@@ -82,6 +85,37 @@ func (ShopService) PlaceOrder(ctx context.Context, req *shop.PlaceOrderReq) (*sh
 		log.Printf("TraceID: %v, err: %+v", traceID, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	// 基于RocketMQ定时取消订单
+	topic := utils.Config.RocketMQ.TopicShop
+	producer, err := utils.NewProducer(topic)
+	if err != nil {
+		err = errors.Wrap(err, "RocketMQ新建生产者实例出错")
+		log.Printf("TraceID: %v, err: %+v\n", traceID, err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	cancelOrder := &struct {
+		OrderId int64 `json:"orderId"`
+		UserId  int64 `json:"userId"`
+	}{
+		OrderId: orderId,
+		UserId:  userId,
+	}
+	data, _ := json.Marshal(cancelOrder)
+	msg := &golang.Message{
+		Topic: topic,
+		Body:  data,
+	}
+	msg.SetKeys(snowID.String())
+	msg.SetTag("tag_order")
+	msg.SetDelayTimestamp(time.Now().Add(time.Second * 10))
+	_, err = producer.Send(context.TODO(), msg)
+	if err != nil {
+		err = errors.Wrap(err, "向RocketMQ中发送订单定时取消信息出错")
+		log.Printf("TraceID: %v, err: %+v\n", traceID, err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	log.Printf("向RocketMQ中发送订单定时取消信息成功")
 
 	return &shop.PlaceOrderResp{
 		OrderId: snowID.String(),

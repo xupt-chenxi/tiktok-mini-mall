@@ -46,3 +46,12 @@ func GetListOrder(userId int64) ([]*model.Order, error) {
 func UpdateOrderState(userId int64, orderId int64, state uint8) error {
 	return db.Model(&model.Order{}).Where("id = ? AND user_id = ?", orderId, userId).Update("state", state).Error
 }
+
+func GetOrderState(orderId int64) (uint8, error) {
+	var state uint8
+	result := db.Model(&model.Order{}).Where("id = ?", orderId).Pluck("state", &state)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return state, nil
+}

@@ -32,6 +32,7 @@ type RocketConfig struct {
 	AccessKey string `mapstructure:"access_key"`
 	SecretKey string `mapstructure:"secret_key"`
 	TopicProd string `mapstructure:"topic_prod"`
+	TopicShop string `mapstructure:"topic_shop"`
 }
 
 type NacosConfig struct {
