@@ -40,6 +40,7 @@ rocketmq:
   access_key: "xxxxxx"
   secret_key: "xxxxxx"
   topic_prod: "topic_prod"
+  topic_shop: "topic_shop"
 
 nacos:
   ip: "localhost"
@@ -50,6 +51,6 @@ nacos:
   namespace_id: ""
 
 elasticsearch:
-  host: "localhost"
+  host: "http://localhost:9200"
   username: "elastic"
   password: ""

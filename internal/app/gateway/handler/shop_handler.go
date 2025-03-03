@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"log"
@@ -27,8 +28,19 @@ type UpdateOrderStateReq struct {
 	State   uint32 `json:"state"`
 }
 
+var placeOrderLimiter = rate.NewLimiter(100, 100)
+var updateOrderLimiter = rate.NewLimiter(100, 100)
+
 func PlaceOrderHandler(c *gin.Context) {
 	traceID := c.GetString("TraceID")
+	if !placeOrderLimiter.Allow() {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error": "服务繁忙, 请稍后重试",
+			"code":  http.StatusTooManyRequests,
+		})
+		log.Printf("TraceID: %v, 生成订单触发限流\n", traceID)
+		return
+	}
 	var req PlaceOrderReq
 	_ = c.ShouldBindJSON(&req)
 
@@ -96,6 +108,14 @@ func ListOrderHandler(c *gin.Context) {
 
 func UpdateOrderState(c *gin.Context) {
 	traceID := c.GetString("TraceID")
+	if !updateOrderLimiter.Allow() {
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error": "服务繁忙, 请稍后重试",
+			"code":  http.StatusTooManyRequests,
+		})
+		log.Printf("TraceID: %v, 更新订单状态触发限流\n", traceID)
+		return
+	}
 	var req UpdateOrderStateReq
 	_ = c.ShouldBindJSON(&req)
 	md := metadata.Pairs("trace-id", traceID)
