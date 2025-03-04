@@ -23,7 +23,7 @@ func GetShopClient() (shop.ShopServiceClient, error) {
 		if shopConn != nil {
 			_ = shopConn.Close()
 		}
-		if shopClient == nil {
+		if shopClient == nil || !isShopConnHealthy() {
 			ip, port := utils.Config.Shop.IP, utils.Config.Shop.Port
 			var err error
 			shopConn, err = grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))

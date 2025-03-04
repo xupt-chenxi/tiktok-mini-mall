@@ -23,7 +23,7 @@ func GetCartClient() (cart.CartServiceClient, error) {
 		if cartConn != nil {
 			_ = cartConn.Close()
 		}
-		if cartClient == nil {
+		if cartClient == nil || !isCartConnHealthy() {
 			ip, port := utils.Config.Cart.IP, utils.Config.Cart.Port
 			var err error
 			cartConn, err = grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))

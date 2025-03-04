@@ -23,7 +23,7 @@ func GetUserClient() (user.UserServiceClient, error) {
 		if userConn != nil {
 			_ = userConn.Close()
 		}
-		if userClient == nil {
+		if userClient == nil || !isUserConnHealthy() {
 			ip, port := utils.Config.User.IP, utils.Config.User.Port
 			var err error
 			userConn, err = grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))

@@ -57,13 +57,6 @@ func GetAllProducts() ([]*model.Product, error) {
 	return productList, result.Error
 }
 
-func SearchProducts(query string) ([]*model.Product, error) {
-	var products []*model.Product
-	// TODO 先基于模糊匹配进行搜索, 后续引入 Elasticsearch
-	result := db.Where("name LIKE ? OR description LIKE ?", "%"+query+"%", "%"+query+"%").Find(&products)
-	return products, result.Error
-}
-
 func DecreaseStock(id uint32, quantity uint32) error {
 	var product model.Product
 

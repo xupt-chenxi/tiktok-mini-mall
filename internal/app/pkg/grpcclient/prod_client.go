@@ -23,7 +23,7 @@ func GetProdClient() (prod.ProductCatalogServiceClient, error) {
 		if prodConn != nil {
 			_ = prodConn.Close()
 		}
-		if prodClient == nil {
+		if prodClient == nil || !isProdConnHealthy() {
 			ip, port := utils.Config.Product.IP, utils.Config.Product.Port
 			var err error
 			prodConn, err = grpc.NewClient(ip+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
