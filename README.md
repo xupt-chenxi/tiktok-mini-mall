@@ -8,7 +8,7 @@ _🌸 字节青训营（2025），简易版抖音商城 🌸_
 
 TikTok Mini Mall 是 2025 字节青训营中的后端大项目，题目要求为做一个简易版的抖音商城。
 
-技术栈：Gin、gRPC、GORM、Go-Redis、RocketMQ
+技术栈：Gin、gRPC、GORM、go-redis、RocketMQ、Elasticsearch、Nacos
 
 ## 项目架构
 
